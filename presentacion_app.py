@@ -1,18 +1,6 @@
 """
 presentacao_app.py  ·  PDO · DESSEM · Apresentação
 Controles no Sidebar — simples, robusto, sem hack de header fixo.
-
-Estrutura de pastas esperada:
-├── OPSP.DT_interface_DESSEM_deploy/
-│   ├── presentacion_app.py
-│   └── DATABASE/
-│       ├── DS_ONS_032026_RV0D06/
-│       │   ├── pdo_sist.dat
-│       │   ├── pdo_term.dat
-│       ├── DS_ONS_062026_RV2D15/
-│       │   ├── pdo_sist.dat
-│       │   ├── pdo_term.dat
-│       └── ...
 """
 
 import streamlit as st
@@ -21,7 +9,67 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
+import zipfile
+import gdown
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🆕 NOVO: Baixar DATABASE do Google Drive
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@st.cache_resource
+def setup_database():
+    """
+    Baixa DATABASE.zip do Google Drive e descompacta automaticamente.
+    """
+    
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATABASE_PATH = os.path.join(SCRIPT_DIR, "DATABASE")
+    
+    # Se DATABASE já existe, não precisa baixar novamente
+    if os.path.exists(DATABASE_PATH):
+        return DATABASE_PATH
+    
+    try:
+        # ⭐ SEU ID (já preenchido!)
+        GOOGLE_DRIVE_FILE_ID = "1t32md3cZfZfJQNuQZtoebWy7ze0v20j8"
+        
+        zip_path = os.path.join(SCRIPT_DIR, "DATABASE.zip")
+        
+        # Baixar do Google Drive
+        st.info("Primeira vez! Baixando DATABASE.zip (pode levar alguns minutos)...")
+        gdown.download(
+            f'https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}',
+            zip_path,
+            quiet=False
+        )
+        
+        st.success("Download completo!")
+        
+        # Descompactar
+        st.info("Descompactando arquivos...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(SCRIPT_DIR)
+        
+        st.success("Arquivos prontos!")
+        
+        # Deletar ZIP depois (economiza espaço)
+        try:
+            os.remove(zip_path)
+        except:
+            pass
+        
+        return DATABASE_PATH
+    
+    except Exception as e:
+        st.error(f"Erro ao baixar: {e}")
+        st.stop()
+
+# Executar no início
+DATABASE_PATH = setup_database()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Resto do código continua IGUAL (não mude nada daqui para baixo)
+# ═══════════════════════════════════════════════════════════════════════════════
 # ═══════════════════════════════════════════════════════════════════════════════
 # 0. CONFIGURAÇÃO DA PÁGINA
 # ═══════════════════════════════════════════════════════════════════════════════
