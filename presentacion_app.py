@@ -50,7 +50,7 @@ DATABASE_PATH = setup_database()
 st.set_page_config(
     page_title="OPSP.DT - Interface DESSEM",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 COR_HIDRO  = "#3B82F6"
@@ -80,12 +80,10 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"],
     color-scheme: light !important;
 }}
 
-/* Forçar todos os textos escuros independente do tema */
 p, span, div, label, h1, h2, h3, h4, h5, h6 {{
     color: {COR_TEXT} !important;
 }}
 
-/* Botões e inputs — sempre fundo branco */
 button, input, select, textarea,
 [data-testid="stSelectbox"] > div,
 [data-testid="stSlider"] > div {{
@@ -94,14 +92,12 @@ button, input, select, textarea,
     border-color: {COR_BORDER} !important;
 }}
 
-/* Dropdown do selectbox — sempre branco */
 [data-baseweb="select"] > div,
 [data-baseweb="popover"] {{
     background-color: #FFFFFF !important;
     color: {COR_TEXT} !important;
 }}
 
-/* Opções do dropdown */
 [role="option"], [role="listbox"] {{
     background-color: #FFFFFF !important;
     color: {COR_TEXT} !important;
@@ -110,12 +106,10 @@ button, input, select, textarea,
     background-color: {COR_BORDER} !important;
 }}
 
-/* Header do Streamlit */
 [data-testid="stHeader"] {{
     background-color: #FFFFFF !important;
 }}
 
-/* Toolbar e menu */
 [data-testid="stToolbar"],
 [data-testid="stDecoration"] {{
     background-color: #FFFFFF !important;
@@ -125,15 +119,16 @@ button, input, select, textarea,
     background-color: {COR_BG};
 }}
 
+/* ── Layout responsivo — padding adaptável ────────────────────────────────── */
 .block-container {{
     padding-top: 2rem !important;
-    padding-bottom: 40px !important;
+    padding-bottom: 2.5rem !important;
     max-width: 100% !important;
 }}
 
 [data-testid="stAppViewBlockContainer"] {{
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+    padding-left: clamp(0.5rem, 2vw, 2rem) !important;
+    padding-right: clamp(0.5rem, 2vw, 2rem) !important;
 }}
 
 /* ── Sidebar — sempre branco ──────────────────────────────────────────────── */
@@ -144,7 +139,6 @@ button, input, select, textarea,
     border-right: 1.5px solid {COR_BORDER} !important;
 }}
 
-/* Textos dentro do sidebar */
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
 [data-testid="stSidebar"] div,
@@ -156,48 +150,148 @@ button, input, select, textarea,
     background: {COR_ACCENT} !important;
 }}
 
-/* ── KPI cards ────────────────────────────────────────────────────────────── */
+/* ── KPI cards — responsivos ─────────────────────────────────────────────── */
 .kpi-card {{
     background: white;
     border: 1px solid {COR_BORDER};
-    border-radius: 14px;
-    padding: 14px 18px;
+    border-radius: clamp(8px, 1.5vw, 14px);
+    padding: clamp(8px, 1.5vw, 14px) clamp(10px, 2vw, 18px);
     border-left: 4px solid var(--accent-color, {COR_ACCENT});
-    min-height: 120px;
+    min-height: clamp(80px, 10vw, 120px);
+    box-sizing: border-box;
 }}
 .kpi-label {{
-    font-size: 10.5px; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: {COR_MUTED}; margin-bottom: 5px;
+    font-size: clamp(9px, 1.1vw, 10.5px);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: {COR_MUTED};
+    margin-bottom: 4px;
 }}
-.kpi-value {{ font-size: 22px; font-weight: 700; color: {COR_TEXT}; }}
-.kpi-sub   {{ font-size: 11px; color: {COR_MUTED}; margin-top: 3px; }}
+.kpi-value {{
+    font-size: clamp(14px, 2.2vw, 22px);
+    font-weight: 700;
+    color: {COR_TEXT};
+    line-height: 1.2;
+}}
+.kpi-sub {{
+    font-size: clamp(9px, 1vw, 11px);
+    color: {COR_MUTED};
+    margin-top: 3px;
+    line-height: 1.4;
+}}
 
-/* ── Títulos de seção ─────────────────────────────────────────────────────── */
-.section-title    {{ font-size: 18px; font-weight: 700; color: {COR_TEXT}; margin: 28px 0 4px 0; }}
-.section-subtitle {{ font-size: 12.5px; color: {COR_MUTED}; margin-bottom: 14px; }}
-.section-divider  {{ border: none; border-top: 1.5px solid {COR_BORDER}; margin: 32px 0 24px 0; }}
+/* ── Títulos de seção — responsivos ──────────────────────────────────────── */
+.section-title    {{
+    font-size: clamp(14px, 2vw, 18px);
+    font-weight: 700; color: {COR_TEXT}; margin: 28px 0 4px 0;
+}}
+.section-subtitle {{
+    font-size: clamp(10px, 1.3vw, 12.5px);
+    color: {COR_MUTED}; margin-bottom: 14px;
+}}
+.section-divider  {{
+    border: none; border-top: 1.5px solid {COR_BORDER};
+    margin: clamp(16px, 3vw, 32px) 0 clamp(12px, 2.5vw, 24px) 0;
+}}
 
-/* ── Fonte block ──────────────────────────────────────────────────────────── */
+/* ── Fonte block — responsivo ─────────────────────────────────────────────── */
 .fonte-block {{
-    background: white; border: 1px solid {COR_BORDER}; border-radius: 14px;
-    padding: 14px 18px; border-top: 4px solid var(--fonte-cor, {COR_ACCENT});
+    background: white; border: 1px solid {COR_BORDER};
+    border-radius: clamp(8px, 1.5vw, 14px);
+    padding: clamp(8px, 1.5vw, 14px) clamp(10px, 2vw, 18px);
+    border-top: 4px solid var(--fonte-cor, {COR_ACCENT});
+    box-sizing: border-box;
 }}
-.fonte-nome  {{ font-size: 15px; font-weight: 700; }}
-.fonte-atual {{ font-size: 30px; font-weight: 800; }}
-.fonte-row   {{ font-size: 12px; color: {COR_MUTED}; }}
+.fonte-nome  {{ font-size: clamp(12px, 1.5vw, 15px); font-weight: 700; }}
+.fonte-atual {{ font-size: clamp(20px, 3vw, 30px); font-weight: 800; }}
+.fonte-row   {{ font-size: clamp(10px, 1.1vw, 12px); color: {COR_MUTED}; }}
 
-/* ── Hora grande ──────────────────────────────────────────────────────────── */
+/* ── Hora grande — responsiva ─────────────────────────────────────────────── */
 .hora-grande {{
-    font-size: 60px; font-weight: 800; text-align: center;
+    font-size: clamp(32px, 6vw, 60px);
+    font-weight: 800; text-align: center;
     color: {COR_ACCENT}; line-height: 1.1;
 }}
 
 /* ── Sidebar label estilo ─────────────────────────────────────────────────── */
 .sb-label {{
-    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    font-size: clamp(9px, 1vw, 10px);
+    font-weight: 700; letter-spacing: 0.08em;
     text-transform: uppercase; color: {COR_MUTED};
     margin-bottom: 2px; margin-top: 12px;
+}}
+
+/* ── Gráficos Plotly — overflow controlado ───────────────────────────────── */
+.stPlotlyChart {{
+    width: 100% !important;
+    overflow-x: auto !important;
+}}
+.stPlotlyChart > div {{
+    width: 100% !important;
+}}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MOBILE (≤ 768px)
+   ══════════════════════════════════════════════════════════════════════════════ */
+@media screen and (max-width: 768px) {{
+
+    /* Padding mínimo em tela pequena */
+    [data-testid="stAppViewBlockContainer"] {{
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
+    }}
+
+    .block-container {{
+        padding-top: 0.5rem !important;
+        padding-bottom: 1rem !important;
+    }}
+
+    /* KPI cards empilhados */
+    .kpi-card {{
+        min-height: 70px !important;
+        padding: 8px 10px !important;
+        border-radius: 10px !important;
+        margin-bottom: 6px !important;
+    }}
+    .kpi-value {{ font-size: 16px !important; }}
+    .kpi-label {{ font-size: 8.5px !important; }}
+    .kpi-sub   {{ font-size: 8.5px !important; }}
+
+    /* Títulos menores */
+    h1 {{ font-size: 18px !important; }}
+
+    /* Hora grande menor */
+    .hora-grande {{ font-size: 28px !important; }}
+
+    /* Fonte block compacto */
+    .fonte-block {{ padding: 8px 10px !important; }}
+    .fonte-atual {{ font-size: 22px !important; }}
+    .fonte-nome  {{ font-size: 11px !important; }}
+    .fonte-row   {{ font-size: 9px !important; }}
+
+    /* Dividers menores */
+    .section-divider {{ margin: 12px 0 10px 0 !important; }}
+
+    /* Forçar scroll horizontal nos gráficos se necessário */
+    .stPlotlyChart {{
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }}
+}}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   TABLET (769px – 1024px)
+   ══════════════════════════════════════════════════════════════════════════════ */
+@media screen and (min-width: 769px) and (max-width: 1024px) {{
+
+    [data-testid="stAppViewBlockContainer"] {{
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }}
+
+    .kpi-value {{ font-size: 18px !important; }}
+    .hora-grande {{ font-size: 44px !important; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -301,6 +395,51 @@ PLOTLY_LAYOUT = dict(
     hovermode="x unified",
 )
 TICKS_2H = [iper_para_hora(i) for i in range(1, 49, 4)]
+
+# ── Detecção de largura de tela via JavaScript ─────────────────────────────
+# Injeta um script que salva a largura na URL como query param
+st.components.v1.html("""
+<script>
+(function() {
+    const w = window.innerWidth;
+    const url = new URL(window.parent.location.href);
+    if (!url.searchParams.get('screen_w') || 
+        Math.abs(parseInt(url.searchParams.get('screen_w')) - w) > 50) {
+        url.searchParams.set('screen_w', w);
+        window.parent.history.replaceState({}, '', url.toString());
+    }
+})();
+</script>
+""", height=0)
+
+# Ler largura da tela via query params (padrão = desktop)
+try:
+    _qp = st.query_params
+    SCREEN_W = int(_qp.get("screen_w", 1200))
+except Exception:
+    SCREEN_W = 1200
+
+def is_mobile():
+    return SCREEN_W <= 768
+
+def is_tablet():
+    return 769 <= SCREEN_W <= 1024
+
+def altura(desktop, tablet=None, mobile=None):
+    """Retorna altura responsiva do gráfico conforme tamanho da tela."""
+    if tablet is None: tablet = int(desktop * 0.85)
+    if mobile is None: mobile = int(desktop * 0.60)
+    if is_mobile():  return mobile
+    if is_tablet():  return tablet
+    return desktop
+
+def margem(desktop_l=50, desktop_r=30, desktop_t=20, desktop_b=55):
+    """Retorna dict de margem responsivo."""
+    if is_mobile():
+        return dict(l=8, r=8, t=15, b=40)
+    if is_tablet():
+        return dict(l=30, r=15, t=18, b=48)
+    return dict(l=desktop_l, r=desktop_r, t=desktop_t, b=desktop_b)
 
 def kpi_card(col, label, value, sub="", cor=COR_ACCENT):
     col.markdown(
@@ -623,7 +762,7 @@ with col_graf:
     fig_share.add_annotation(x=hora_disp, y=y_max_s*1.05, text=f"<b>{hora_disp}</b>",
         showarrow=False, yanchor="bottom", font=dict(size=11, color="#475569"),
         bgcolor="white", bordercolor="#94A3B8", borderwidth=1)
-    fig_share.update_layout(**PLOTLY_LAYOUT, height=500,
+    fig_share.update_layout(**PLOTLY_LAYOUT, height=altura(500, 420, 320),
         yaxis_title="% da geração total", xaxis_title="Hora",
         xaxis=dict(tickvals=TICKS_2H, tickmode="array"))
     st.plotly_chart(fig_share, use_container_width=True)
@@ -634,7 +773,7 @@ with col_donut:
         values=[row_sel["SHARE_HIDRO"],row_sel["SHARE_RENOV"],row_sel["SHARE_TERM"]],
         hole=0.55, marker=dict(colors=[COR_HIDRO,COR_RENOV,COR_TERM]),
         textinfo="percent", hovertemplate="%{label}: %{value:.1f}%<extra></extra>")])
-    fig_donut.update_layout(template="plotly_white", height=500,
+    fig_donut.update_layout(template="plotly_white", height=altura(500, 420, 300),
         title=dict(text=f"Composição da matriz no periodo — {hora_disp}", font=dict(size=20)),
         margin=dict(l=10,r=10,t=40,b=10), legend=dict(orientation="h",y=-0.08))
     st.plotly_chart(fig_donut, use_container_width=True)
@@ -817,14 +956,14 @@ fig_op.add_hline(
 # ─────────────────────────────────────────────
 fig_op.update_layout(
     **{k: v for k, v in PLOTLY_LAYOUT.items() if k not in ["legend", "margin"]},
-    margin=dict(l=50, r=30, t=60, b=50),
-    height=800,
+    margin=margem(50, 30, 60, 50),
+    height=altura(800, 640, 900),
     legend=dict(
         orientation="h",
         y=-0.12,
         x=0.5,
         xanchor="center",
-        font=dict(size=10)
+        font=dict(size=10 if not is_mobile() else 8)
     ),
     showlegend=True
 )
@@ -949,10 +1088,10 @@ with col_term_blk:
         _ym_t = df_term_iper["GERACAO"].max() * 1.05
         _add_vline_fig(fig_term, hora_disp, _ym_t)
         fig_term.update_layout(
-            **PLOTLY_LAYOUT, height=360,
+            **PLOTLY_LAYOUT, height=altura(360, 300, 260),
             xaxis_title="Hora", yaxis_title="Potência (MW)",
             xaxis=dict(tickvals=ticks_src, tickmode="array"),
-            margin=dict(l=50, r=20, t=20, b=45),
+            margin=margem(50, 20, 20, 45),
             legend=dict(orientation="h", y=-0.22, font=dict(size=10)))
         st.plotly_chart(fig_term, use_container_width=True)
 
@@ -980,10 +1119,10 @@ with col_renov_blk:
     _ym_r = df["G_RENOV"].max() * 1.05
     _add_vline_fig(fig_renov, hora_disp, _ym_r)
     fig_renov.update_layout(
-        **PLOTLY_LAYOUT, height=360,
+        **PLOTLY_LAYOUT, height=altura(360, 300, 260),
         xaxis_title="Hora", yaxis_title="Potência (MW)",
         xaxis=dict(tickvals=ticks_src, tickmode="array"),
-        margin=dict(l=50, r=20, t=20, b=45),
+        margin=margem(50, 20, 20, 45),
         legend=dict(orientation="h", y=-0.22, font=dict(size=10)))
     st.plotly_chart(fig_renov, use_container_width=True)
 
@@ -1016,10 +1155,10 @@ with col_hidro_blk:
     _ym_h = df["G_HIDRO"].max() * 1.05
     _add_vline_fig(fig_hidro, hora_disp, _ym_h)
     fig_hidro.update_layout(
-        **PLOTLY_LAYOUT, height=360,
+        **PLOTLY_LAYOUT, height=altura(360, 300, 260),
         xaxis_title="Hora", yaxis_title="Potência (MW)",
         xaxis=dict(tickvals=ticks_src, tickmode="array"),
-        margin=dict(l=50, r=20, t=20, b=45),
+        margin=margem(50, 20, 20, 45),
         legend=dict(orientation="h", y=-0.22, font=dict(size=10)))
     st.plotly_chart(fig_hidro, use_container_width=True)
 
@@ -1215,7 +1354,7 @@ if hora_ini_hidro and hora_fim_hidro:
             font=dict(color=COR_HIDRO,size=12), bgcolor="white",
             bordercolor=COR_HIDRO, borderwidth=1.5, borderpad=5, ax=0, ay=-45)
 
-fig_pato.update_layout(**PLOTLY_LAYOUT, height=600, xaxis_title="Horário do Dia",
+fig_pato.update_layout(**PLOTLY_LAYOUT, height=altura(600, 480, 340), xaxis_title="Horário do Dia",
     yaxis_title="Potência (MW)", xaxis=dict(tickvals=TICKS_2H, tickmode="array"))
 # Linha IPER
 _ym_pato = df["DEMANDA"].max() * 1.08
@@ -1260,9 +1399,9 @@ fig_dur.add_trace(go.Scatter(x=x_dur, y=renov_s+hidro_s+term_s, mode="lines", li
     fill="tonexty", fillcolor=rgba(COR_TERM,0.5), name="Térmica", line=dict(color=COR_TERM,width=2)))
 fig_dur.add_trace(go.Scatter(x=x_dur, y=total_s, mode="lines", line_shape="hv",
     name="Geração Total", line=dict(color=COR_TEXT,width=3)))
-fig_dur.update_layout(**PLOTLY_LAYOUT, height=600,
+fig_dur.update_layout(**PLOTLY_LAYOUT, height=altura(600, 480, 340),
     xaxis_title="% do dia (ordenado por geração total decrescente)", yaxis_title="MW",
-    margin=dict(l=50,r=30,t=20,b=55))
+    margin=margem(50, 30, 20, 55))
 # Linha IPER — posição percentual do IPER no eixo de duração
 # O IPER selecionado ocupa a posição onde seu valor de GER_TOTAL cai na ordenação
 _iper_rank    = np.sum(df["GER_TOTAL"].values >= df.loc[df["IPER"]==iper_sel,"GER_TOTAL"].values[0]
