@@ -1,0 +1,94 @@
+# 🚫 .gitignore - OPSP.DT Interface DESSEM
+
+# ───────────────────────────────────────────────────────────────
+# DADOS DESSEM (Muito grandes, não versionar)
+# ───────────────────────────────────────────────────────────────
+
+# Ignorar toda a pasta DATABASE por padrão
+DATABASE/
+
+# Se preferir manter versionado mas economizar espaço:
+# Descomente abaixo e comente a linha anterior
+# DATABASE/*_arq.txt
+# DATABASE/**/*.log
+# DATABASE/**/*_backup.*
+# DATABASE/**/pdo_*_arq.txt
+
+
+# ───────────────────────────────────────────────────────────────
+# CACHE STREAMLIT
+# ───────────────────────────────────────────────────────────────
+.streamlit/
+.cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+
+# ───────────────────────────────────────────────────────────────
+# IDE E EDITORES
+# ───────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+
+# ───────────────────────────────────────────────────────────────
+# ARQUIVOS TEMPORÁRIOS
+# ───────────────────────────────────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.#*
+
+
+# ───────────────────────────────────────────────────────────────
+# LOGS E DEBUG
+# ───────────────────────────────────────────────────────────────
+*.log
+logs/
+*.log.*
+debug.txt
+
+
+# ───────────────────────────────────────────────────────────────
+# ENVIRONMENT
+# ───────────────────────────────────────────────────────────────
+.env
+.env.local
+venv/
+env/
+ENV/
+.venv
+
+
+# ───────────────────────────────────────────────────────────────
+# OS ESPECÍFICOS
+# ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.desktop
+.directory
+
+
+# ───────────────────────────────────────────────────────────────
+# ARQUIVOS DESNECESSÁRIOS DO DESSEM (Se decidir manter DATABASE/)
+# ───────────────────────────────────────────────────────────────
+DATABASE/**/*_arq.txt
+DATABASE/**/*_backup.*
+DATABASE/**/*.log
+DATABASE/**/*.tmp
+DATABASE/**/pdo_sist_arq.txt
+DATABASE/**/pdo_term_arq.txt
