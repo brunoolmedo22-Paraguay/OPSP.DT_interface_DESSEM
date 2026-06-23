@@ -238,7 +238,7 @@ SUBSISTEMAS = ["SIN", "SE", "S", "NE", "N"]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 4. AUXILIARES
+# 3. AUXILIARES
 # ═══════════════════════════════════════════════════════════════════════════════
 def to_float(v):
     v = str(v).strip()
@@ -291,14 +291,10 @@ def kpi_card(col, label, value, sub="", cor=COR_ACCENT):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 5. LEITURA DE DADOS
+# 4. LEITURA DE DADOS
 # ═══════════════════════════════════════════════════════════════════════════════
 @st.cache_data(show_spinner=False)
 def carregar_sist(arq_sist):
-    """
-    Carrega arquivo pdo_sist.dat
-    Extrai: IPER, SIST, CMO, DEMANDA, G_RENOV, G_HIDRO, G_TERM, EARM
-    """
     dados = []
     with open(arq_sist, "r", encoding="latin1") as f:
         for linha in f:
@@ -319,10 +315,6 @@ def carregar_sist(arq_sist):
 
 @st.cache_data(show_spinner=False)
 def carregar_term(arq_term):
-    """
-    Carrega arquivo pdo_term.dat
-    Extrai: IPER, NOME, SIST, GERACAO, GMIN, GMAX, CVU
-    """
     cvu_por_usina, dados_99 = {}, []
     with open(arq_term, "r", encoding="latin1") as f:
         for l in f:
@@ -350,7 +342,7 @@ def carregar_term(arq_term):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 6. SIDEBAR — todos os controles aqui
+# 5. SIDEBAR — todos os controles aqui
 # ═══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown(
@@ -404,26 +396,19 @@ with st.sidebar:
     st.markdown(
         f"<div style='font-size:10px;color:{COR_MUTED};'>"
         f"IPER 1–48 · 00:00 → 23:30<br>"
-        f"Base: <code style='font-size:9px;'>./{DISPLAY_PATH}</code></div>",
+        f"Base: <code style='font-size:9px;'>{BASE_PATH}</code></div>",
         unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 7. CARREGAR DADOS
+# 6. CARREGAR DADOS
 # ═══════════════════════════════════════════════════════════════════════════════
-base_path = os.path.join(DATABASE_PATH, pasta_ativa)
+base_path = os.path.join(BASE_PATH, pasta_ativa)
 arq_sist  = os.path.join(base_path, "pdo_sist.dat")
 arq_term  = os.path.join(base_path, "pdo_term.dat")
 
 if not os.path.exists(arq_sist):
-    st.error(
-        f"❌ Arquivo não encontrado: `pdo_sist.dat`\n\n"
-        f"**Verificar:**\n"
-        f"- Pasta esperada: `./{DISPLAY_PATH}/{pasta_ativa}/`\n"
-        f"- Arquivo obrigatório: `pdo_sist.dat`\n\n"
-        f"**Dica:** Se estiver rodando localmente, certifique-se que os arquivos DESSEM estão em:\n"
-        f"`DATABASE/DS_ONS_032026_RV0D06/pdo_sist.dat` (e outras datas)"
-    )
+    st.error(f"Arquivo não encontrado: `{arq_sist}`\n\nVerifique se a pasta **{pasta_ativa}** existe em `{BASE_PATH}`.")
     st.stop()
 
 df_sist_raw = carregar_sist(arq_sist)
@@ -476,95 +461,624 @@ s_term  = stat_info(df, "G_TERM")
 s_earm  = stat_info(df, "EARM")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 8. TÍTULO + KPIs
+# 7. TÍTULO + KPIs
 # ═══════════════════════════════════════════════════════════════════════════════
 st.markdown(
     f"<h1 style='font-size:30px;font-weight:800;color:{COR_TEXT};"
     f"letter-spacing:-0.6px;margin-bottom:2px;margin-top:0;'>"
-    f"Plataforma de Visualização de Resultados do Modelo DESSEM – ONS</h1>",
-    unsafe_allow_html=True)
-st.markdown(
-    f"<p style='font-size:13px;color:{COR_MUTED};margin-top:0;margin-bottom:20px;'>"
-    f"{nome_regiao} · {data_sel} · Hora {hora_str_sb}"
-    f"</p>",
+    f"Plataforma de Visualização de Resultados do Modelo DESSEM – ONS</h1>"
+    f"<p style='font-size:18px;color:{COR_MUTED};'>"
+    f"PDO · DESSEM · {nome_regiao} · {data_sel}</p>",
     unsafe_allow_html=True)
 
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 
-k1, k2, k3, k4 = st.columns(4)
-kpi_card(k1,"CMO", f"R$ {s_cmo['max']:.2f}/MWh", f"Máx às {s_cmo['tmax']}", COR_ACCENT)
-kpi_card(k2,"Demanda Total", f"{s_dem['max']/1000:.2f} GW", f"Máx às {s_dem['tmax']}", COR_TEXT)
-kpi_card(k3,"Geração Hidro", f"{s_hidro['max']/1000:.2f} GW", f"Máx às {s_hidro['tmax']}", COR_HIDRO)
-kpi_card(k4,"EARM", f"{s_earm['min']:.1f}%", f"Mín às {s_earm['tmin']}", COR_RENOV)
+total_med = df["GER_TOTAL"].mean() + 1e-9
+cmo_med   = df["CMO"].mean()
+dem_med   = df["DEMANDA"].mean()
+hidro_med = df["G_HIDRO"].mean()
+renov_med = df["G_RENOV"].mean()
+term_med  = df["G_TERM"].mean()
+earm_med  = df["EARM"].mean()
 
+k1,k2,k3,k4,k5,k6 = st.columns(6)
+
+kpi_card(
+    k1,
+    "CMO Médio",
+    f"{cmo_med:,.0f} R$/MWh",
+    f"Máximo {s_cmo['max']:,.0f} · {s_cmo['tmax']}<br>"
+    f"Mínimo {s_cmo['min']:,.0f} · {s_cmo['tmin']}",
+    COR_ACCENT
+)
+
+kpi_card(
+    k2,
+    "Demanda Média",
+    f"{dem_med:,.0f} MW",
+    f"Máximo {s_dem['max']:,.0f} · {s_dem['tmax']}<br>"
+    f"Mínimo {s_dem['min']:,.0f} · {s_dem['tmin']}",
+    COR_TEXT
+)
+
+kpi_card(
+    k3,
+    "Geração Hidro",
+    f"{hidro_med:,.0f} MW",
+    f"Máximo {s_hidro['max']:,.0f} · {s_hidro['tmax']}<br>"
+    f"Mínimo {s_hidro['min']:,.0f} · {s_hidro['tmin']}",
+    COR_HIDRO
+)
+
+kpi_card(
+    k4,
+    "Geração Renovável",
+    f"{renov_med:,.0f} MW",
+    f"Máximo {s_renov['max']:,.0f} · {s_renov['tmax']}<br>"
+    f"Mínimo {s_renov['min']:,.0f} · {s_renov['tmin']}",
+    COR_RENOV
+)
+
+kpi_card(
+    k5,
+    "Geração Térmica",
+    f"{term_med:,.0f} MW",
+    f"Máximo {s_term['max']:,.0f} · {s_term['tmax']}<br>"
+    f"Mínimo {s_term['min']:,.0f} · {s_term['tmin']}",
+    COR_TERM
+)
+
+kpi_card(
+    k6,
+    "EARM Médio",
+    f"{earm_med:,.0f}",
+    f"Máximo {s_earm['max']:,.0f} · {s_earm['tmax']}<br>"
+    f"Mínimo {s_earm['min']:,.0f} · {s_earm['tmin']}",
+    "#8B5CF6"
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 8. PARTICIPAÇÃO POR FONTE
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 st.markdown(
     f"<h1 style='font-size:24px;font-weight:800;color:{COR_TEXT};"
     f"letter-spacing:-0.6px;margin-bottom:2px;margin-top:0;'>"
-    f"1. Mix de geração (curva do dia)</h1>",
+    f"1. Participação por Fonte na Geração total</h1>",
     unsafe_allow_html=True)
 
-st.markdown(f"<div class='section-subtitle'>Distribuição de fontes: renovável, hidráulica, térmica e nuclear</div>",
-    unsafe_allow_html=True)
+def fonte_stats(df, col_share, col_hora):
+    if df.empty or df[col_share].dropna().empty:
+        return {"max": 0, "min": 0, "mean": 0, "t_max": "-", "t_min": "-"}
+    idx_max = df[col_share].idxmax(); idx_min = df[col_share].idxmin()
+    return {"max": df.loc[idx_max, col_share], "min": df.loc[idx_min, col_share],
+            "mean": df[col_share].mean(),
+            "t_max": df.loc[idx_max, col_hora], "t_min": df.loc[idx_min, col_hora]}
 
-hora_disp = iper_para_hora(iper_sel)
+s_hidro = fonte_stats(df, "SHARE_HIDRO", "Hora_Str")
+s_renov = fonte_stats(df, "SHARE_RENOV", "Hora_Str")
+s_term  = fonte_stats(df, "SHARE_TERM",  "Hora_Str")
 
-fig_mix = go.Figure()
-fig_mix.add_trace(go.Scatter(x=df["Hora_Str"], y=df["G_RENOV"],  mode="lines", stackgroup="one",
-    name="Renovável (Solar+Eólica)", line=dict(width=0), fillcolor=COR_RENOV))
-fig_mix.add_trace(go.Scatter(x=df["Hora_Str"], y=df["G_HIDRO"],  mode="lines", stackgroup="one",
-    name="Hidráulica", line=dict(width=0), fillcolor=COR_HIDRO))
-fig_mix.add_trace(go.Scatter(x=df["Hora_Str"], y=df["G_TERM"],   mode="lines", stackgroup="one",
-    name="Térmica", line=dict(width=0), fillcolor=COR_TERM))
-fig_mix.add_trace(go.Scatter(x=df["Hora_Str"], y=df["GER_TOTAL"], mode="lines",
-    name="Total", line=dict(color=COR_TEXT, width=3)))
+tmp     = df[df["IPER"] == iper_sel]
+if tmp.empty: tmp = df[df["IPER"] == df["IPER"].min()]
+row_sel   = tmp.iloc[0]
+hora_disp = row_sel["Hora_Str"]
 
-add_vline(fig_mix, hora_disp, df["GER_TOTAL"].max() * 1.1)
-fig_mix.update_layout(**PLOTLY_LAYOUT, height=500, xaxis_title="Horário do Dia",
-    yaxis_title="Potência (MW)", xaxis=dict(tickvals=TICKS_2H, tickmode="array"))
-st.plotly_chart(fig_mix, use_container_width=True)
+def bloco_fonte(col, nome, stats, atual_val, cor):
+    col.markdown(
+        f"<div class='fonte-block' style='--fonte-cor:{cor};'>"
+        f"<div class='fonte-nome'>{nome}</div>"
+        f"<div class='kpi-label'>Atual (%)</div>"
+        f"<div class='fonte-atual'>{atual_val:.1f}%</div>"
+        f"<div class='fonte-row'>"
+        f"<b>Máximo:</b> {stats['max']:.1f}% &nbsp;⏱ {stats['t_max']}<br>"
+        f"<b>Mínimo:</b> {stats['min']:.1f}% &nbsp;⏱ {stats['t_min']}<br>"
+        f"<b>Média:</b> {stats['mean']:.1f}%"
+        f"</div></div>", unsafe_allow_html=True)
 
+col_h, col_r, col_t, col_ctrl = st.columns([1, 1, 1, 1.2])
+bloco_fonte(col_h, "Hidro",     s_hidro, row_sel["SHARE_HIDRO"], COR_HIDRO)
+bloco_fonte(col_r, "Renovável", s_renov, row_sel["SHARE_RENOV"], COR_RENOV)
+bloco_fonte(col_t, "Térmica",   s_term,  row_sel["SHARE_TERM"],  COR_TERM)
+with col_ctrl:
+    st.markdown(f"<div class='hora-grande'>{hora_disp}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center;font-size:12px;color:{COR_MUTED};'>"
+                f"IPER {iper_sel} · ajuste o slider na barra lateral</div>", unsafe_allow_html=True)
+
+st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
+
+
+col_graf, col_donut = st.columns([2, 1])
+with col_graf:
+    fig_share = go.Figure()
+    for col_s, name, cor in [("SHARE_HIDRO","Hidro",COR_HIDRO),
+                               ("SHARE_RENOV","Renovável",COR_RENOV),
+                               ("SHARE_TERM","Térmica",COR_TERM)]:
+        fig_share.add_trace(go.Scatter(x=df["Hora_Str"], y=df[col_s],
+            name=name, line=dict(color=cor, width=3.5)))
+    y_max_s = max(df["SHARE_HIDRO"].max(), df["SHARE_RENOV"].max(), df["SHARE_TERM"].max())
+    fig_share.add_trace(go.Scatter(x=[hora_disp,hora_disp], y=[0, y_max_s*1.05],
+        mode="lines", showlegend=False, line=dict(color="#94A3B8", width=2, dash="dash")))
+    fig_share.add_annotation(x=hora_disp, y=y_max_s*1.05, text=f"<b>{hora_disp}</b>",
+        showarrow=False, yanchor="bottom", font=dict(size=11, color="#475569"),
+        bgcolor="white", bordercolor="#94A3B8", borderwidth=1)
+    fig_share.update_layout(**PLOTLY_LAYOUT, height=500,
+        yaxis_title="% da geração total", xaxis_title="Hora",
+        xaxis=dict(tickvals=TICKS_2H, tickmode="array"))
+    st.plotly_chart(fig_share, use_container_width=True)
+
+with col_donut:
+    fig_donut = go.Figure(data=[go.Pie(
+        labels=["Hidro","Renovável","Térmica"],
+        values=[row_sel["SHARE_HIDRO"],row_sel["SHARE_RENOV"],row_sel["SHARE_TERM"]],
+        hole=0.55, marker=dict(colors=[COR_HIDRO,COR_RENOV,COR_TERM]),
+        textinfo="percent", hovertemplate="%{label}: %{value:.1f}%<extra></extra>")])
+    fig_donut.update_layout(template="plotly_white", height=500,
+        title=dict(text=f"Composição da matriz no periodo — {hora_disp}", font=dict(size=20)),
+        margin=dict(l=10,r=10,t=40,b=10), legend=dict(orientation="h",y=-0.08))
+    st.plotly_chart(fig_donut, use_container_width=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 9. ANÁLISE OPERATIVA ENERGÉTICA
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 st.markdown(
     f"<h1 style='font-size:24px;font-weight:800;color:{COR_TEXT};"
     f"letter-spacing:-0.6px;margin-bottom:2px;margin-top:0;'>"
-    f"2. CMO e demanda</h1>",
+    f"2. Análise Operativa Energética</h1>",
     unsafe_allow_html=True)
 
-fig_cmo = make_subplots(specs=[[{"secondary_y": True}]])
-fig_cmo.add_trace(go.Scatter(x=df["Hora_Str"], y=df["CMO"], mode="lines",
-    name="CMO", line=dict(color=COR_ACCENT, width=3)), secondary_y=False)
-fig_cmo.add_trace(go.Scatter(x=df["Hora_Str"], y=df["DEMANDA"], mode="lines",
-    name="Demanda", line=dict(color=COR_TEXT, width=2.5, dash="dot")), secondary_y=True)
+fig_op = make_subplots(
+    rows=2, cols=2,
+    subplot_titles=(
+        "Preço Marginal de Operação (CMO)",
+        "Curva de Carga (Demanda Bruta)",
+        "Evolução de Geração por Fonte",
+        "Residual Load (Curva de Pato)"
+    ),
+    vertical_spacing=0.12,
+    horizontal_spacing=0.08
+)
 
-add_vline(fig_cmo, hora_disp, df["CMO"].max() * 1.1, row=1, col=1)
-fig_cmo.update_layout(**PLOTLY_LAYOUT, height=500, xaxis_title="Horário do Dia",
-    xaxis=dict(tickvals=TICKS_2H, tickmode="array"))
-fig_cmo.update_yaxes(title_text="CMO (R$/MWh)", secondary_y=False)
-fig_cmo.update_yaxes(title_text="Demanda (MW)", secondary_y=True)
-st.plotly_chart(fig_cmo, use_container_width=True)
+hs = df["Hora_Str"]
 
+# ─────────────────────────────────────────────
+# 1) CMO
+# ─────────────────────────────────────────────
+fig_op.add_trace(
+    go.Scatter(
+        x=hs, y=df["CMO"],
+        name="CMO",
+        mode="lines+markers",
+        line=dict(color=COR_ACCENT, width=2.5),
+        fill="tozeroy",
+        fillcolor=rgba(COR_ACCENT, 0.07)
+    ),
+    row=1, col=1
+)
+
+# ─────────────────────────────────────────────
+# 2) Demanda Bruta
+# ─────────────────────────────────────────────
+fig_op.add_trace(
+    go.Scatter(
+        x=hs, y=df["DEMANDA"],
+        name="Demanda",
+        mode="lines",
+        line=dict(color="#F59E0B", width=2.5)
+    ),
+    row=1, col=2
+)
+
+# ─────────────────────────────────────────────
+# 3) Geração por fonte
+# ─────────────────────────────────────────────
+fig_op.add_trace(go.Scatter(
+    x=hs, y=df["G_RENOV"], name="Renovável",
+    line=dict(color=COR_RENOV, width=2)
+), row=2, col=1)
+
+fig_op.add_trace(go.Scatter(
+    x=hs, y=df["G_HIDRO"], name="Hidro",
+    line=dict(color=COR_HIDRO, width=2)
+), row=2, col=1)
+
+fig_op.add_trace(go.Scatter(
+    x=hs, y=df["G_TERM"], name="Térmica",
+    line=dict(color=COR_TERM, width=2)
+), row=2, col=1)
+# ─────────────────────────────────────────────
+# 3.4) Geração total (soma das fontes)
+# ─────────────────────────────────────────────
+
+df["G_TOTAL"] = df["G_RENOV"] + df["G_HIDRO"] + df["G_TERM"]
+
+fig_op.add_trace(go.Scatter(
+    x=hs,
+    y=df["G_TOTAL"],
+    name="Geração Total",
+    mode="lines",
+    line=dict(color="#111827", width=3.2, dash="solid")
+), row=2, col=1)
+
+# ─────────────────────────────────────────────
+# 4) Residual Load + Duck Curve (áreas físicas correctas)
+# ─────────────────────────────────────────────
+
+dem = df["DEMANDA"]
+ren = df["G_RENOV"]
+
+residual = dem - ren
+df["RESIDUAL_LOAD"] = residual
+
+# ─────────────────────────────────────────────
+# Curva de Demanda
+# ─────────────────────────────────────────────
+fig_op.add_trace(
+    go.Scatter(
+        x=hs, y=dem,
+        name="Demanda",
+        mode="lines",
+        line=dict(color="#F59E0B", width=2.5)
+    ),
+    row=2, col=2
+)
+
+# ─────────────────────────────────────────────
+# Curva de Pato (Residual Load)
+# ─────────────────────────────────────────────
+fig_op.add_trace(
+    go.Scatter(
+        x=hs, y=residual,
+        name="Residual Load (Duck Curve)",
+        mode="lines",
+        line=dict(color="#8B5CF6", width=3)
+    ),
+    row=2, col=2
+)
+
+# ─────────────────────────────────────────────
+# 🔵 Área azul: bajo la curva de pato (0 → residual)
+# ─────────────────────────────────────────────
+fig_op.add_trace(
+    go.Scatter(
+        x=hs,
+        y=residual,
+        name="Carga Residual (Área)",
+        mode="none",
+        fill="tozeroy",
+        fillcolor="rgba(59,130,246,0.25)"
+    ),
+    row=2, col=2
+)
+
+# ─────────────────────────────────────────────
+# 🟢 Área verde: energía renovável (Demanda - Residual)
+# ─────────────────────────────────────────────
+fig_op.add_trace(
+    go.Scatter(
+        x=hs,
+        y=dem,
+        name="Demanda (Base área verde)",
+        mode="none",
+        fill="tozeroy",
+        fillcolor="rgba(34,197,94,0.18)"
+    ),
+    row=2, col=2
+)
+
+fig_op.add_trace(
+    go.Scatter(
+        x=hs,
+        y=residual,
+        name="Residual (corte área verde)",
+        mode="none",
+        fill="tonexty",
+        fillcolor="rgba(34,197,94,0.18)",
+        showlegend=False
+    ),
+    row=2, col=2
+)
+
+# ─────────────────────────────────────────────
+# Línea cero de referencia conceptual
+# ─────────────────────────────────────────────
+fig_op.add_hline(
+    y=0,
+    line_dash="dot",
+    line_color="#94A3B8",
+    row=2, col=2
+)
+
+# ─────────────────────────────────────────────
+# Layout
+# ─────────────────────────────────────────────
+fig_op.update_layout(
+    **{k: v for k, v in PLOTLY_LAYOUT.items() if k not in ["legend", "margin"]},
+    margin=dict(l=50, r=30, t=60, b=50),
+    height=800,
+    legend=dict(
+        orientation="h",
+        y=-0.12,
+        x=0.5,
+        xanchor="center",
+        font=dict(size=10)
+    ),
+    showlegend=True
+)
+
+# ─────────────────────────────────────────────
+# X axis config
+# ─────────────────────────────────────────────
+for r in range(1, 3):
+    for c in range(1, 3):
+        fig_op.update_xaxes(
+            tickvals=TICKS_2H,
+            tickmode="array",
+            row=r, col=c
+        )
+
+# ─────────────────────────────────────────────
+# Y axis labels
+# ─────────────────────────────────────────────
+fig_op.update_yaxes(title_text="R$/MWh", row=1, col=1)
+fig_op.update_yaxes(title_text="MW", row=1, col=2)
+fig_op.update_yaxes(title_text="MW", row=2, col=1)
+fig_op.update_yaxes(title_text="MW", row=2, col=2)
+
+st.plotly_chart(fig_op, use_container_width=True)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 10. DESPACHO POR FONTE — Térmica | Renovável | Hidro | Estatísticas
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 st.markdown(
     f"<h1 style='font-size:24px;font-weight:800;color:{COR_TEXT};"
     f"letter-spacing:-0.6px;margin-bottom:2px;margin-top:0;'>"
-    f"3. Share de fontes</h1>",
+    f"3. Despacho por fonte</h1>",
     unsafe_allow_html=True)
 
-fig_share = go.Figure()
-fig_share.add_trace(go.Scatter(x=df["Hora_Str"], y=df["SHARE_HIDRO"],
-    name="Hidráulica %", line=dict(color=COR_HIDRO, width=2.5)))
-fig_share.add_trace(go.Scatter(x=df["Hora_Str"], y=df["SHARE_RENOV"],
-    name="Renovável %", line=dict(color=COR_RENOV, width=2.5)))
-fig_share.add_trace(go.Scatter(x=df["Hora_Str"], y=df["SHARE_TERM"],
-    name="Térmica %", line=dict(color=COR_TERM, width=2.5)))
+# ── helpers locais ─────────────────────────────────────────────────────────────
+def _add_vline_fig(fig, hora, y_max):
+    fig.add_trace(go.Scatter(
+        x=[hora, hora], y=[0, y_max], mode="lines", showlegend=False,
+        line=dict(color="#94A3B8", width=1.8, dash="dash"), hoverinfo="skip"))
+    fig.add_annotation(x=hora, y=y_max, text=f"<b>{hora}</b>",
+        showarrow=False, yanchor="bottom", font=dict(size=10, color="#475569"),
+        bgcolor="white", bordercolor="#94A3B8", borderwidth=1)
 
-add_vline(fig_share, hora_disp, 100)
-fig_share.update_layout(**PLOTLY_LAYOUT, height=500, xaxis_title="Horário do Dia",
-    yaxis_title="Percentual (%)", xaxis=dict(tickvals=TICKS_2H, tickmode="array"),
-    yaxis=dict(range=[0, 100]))
-st.plotly_chart(fig_share, use_container_width=True)
+# ── pré-calcular renovável e hidro a partir de df (pdo_sist) ──────────────────
+# df já tem G_RENOV e G_HIDRO por IPER
+renov_media  = df["G_RENOV"].mean()
+renov_max    = df["G_RENOV"].max()
+renov_min    = df["G_RENOV"].min()
+hidro_media  = df["G_HIDRO"].mean()
+hidro_max    = df["G_HIDRO"].max()
+hidro_min    = df["G_HIDRO"].min()
+t_renov_max  = df.loc[df["G_RENOV"].idxmax(), "Hora_Str"]
+t_renov_min  = df.loc[df["G_RENOV"].idxmin(), "Hora_Str"]
+t_hidro_max  = df.loc[df["G_HIDRO"].idxmax(), "Hora_Str"]
+t_hidro_min  = df.loc[df["G_HIDRO"].idxmin(), "Hora_Str"]
 
+# ── dados térmicos pré-calculados (podem não existir) ─────────────────────────
+if not df_term.empty:
+    df_term_iper = df_term.groupby("IPER").agg(
+        GERACAO=("GERACAO", "sum"), GMIN=("GMIN", "sum")).reset_index()
+    df_term_iper["Hora_Str"] = df_term_iper["IPER"].apply(iper_para_hora)
+    term_media   = df_term_iper["GERACAO"].mean()
+    term_max     = df_term_iper["GERACAO"].max()
+    term_min     = df_term_iper["GERACAO"].min()
+    t_term_max   = df_term_iper.loc[df_term_iper["GERACAO"].idxmax(), "Hora_Str"]
+    t_term_min   = df_term_iper.loc[df_term_iper["GERACAO"].idxmin(), "Hora_Str"]
+    inflex_media = df_term_iper["GMIN"].mean()
+    contem_angra = df_term["NOME"].fillna("").str.contains("ANGRA", case=False).any()
+    cvu_pond = ((df_term["CVU"] * df_term["GERACAO"]).sum() / df_term["GERACAO"].sum()
+                if df_term["GERACAO"].sum() > 0 else df_term["CVU"].mean())
+else:
+    df_term_iper = pd.DataFrame()
+    term_media = term_max = term_min = inflex_media = cvu_pond = 0.0
+    t_term_max = t_term_min = "--"
+    contem_angra = False
+
+ticks_src = df["Hora_Str"].iloc[::4].tolist()
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ROW 1  →  Col esq: Térmica   |   Col dir: Renovável
+# ══════════════════════════════════════════════════════════════════════════════
+col_term_blk, col_renov_blk = st.columns(2)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Col esq — TÉRMICA
+# ─────────────────────────────────────────────────────────────────────────────
+with col_term_blk:
+    st.markdown(
+        f"<div style='font-size:15px;font-weight:700;color:{COR_TERM};"
+        f"margin-bottom:10px;'>Despacho Térmico</div>",
+        unsafe_allow_html=True)
+
+    if df_term.empty:
+        st.info("pdo_term.dat não encontrado — seção indisponível.")
+    else:
+
+        fig_term = go.Figure()
+        if contem_angra:
+            df_angra  = df_term[df_term["NOME"].str.contains("ANGRA", case=False)].groupby("IPER").agg({"GERACAO": "sum"}).reset_index()
+            df_outras = df_term[~df_term["NOME"].str.contains("ANGRA", case=False)].groupby("IPER").agg({"GERACAO": "sum"}).reset_index()
+            df_angra["Hora_Str"]  = df_angra["IPER"].apply(iper_para_hora)
+            df_outras["Hora_Str"] = df_outras["IPER"].apply(iper_para_hora)
+            fig_term.add_trace(go.Scatter(
+                x=df_angra["Hora_Str"], y=df_angra["GERACAO"],
+                mode="lines", name="Nuclear (Angra 1 e 2)", stackgroup="one",
+                fillcolor=rgba("#6D28D9", 0.30), line=dict(color=COR_NUC, width=2)))
+            fig_term.add_trace(go.Scatter(
+                x=df_outras["Hora_Str"], y=df_outras["GERACAO"],
+                mode="lines", name="Demais Térmicas", stackgroup="one",
+                fillcolor=rgba(COR_TERM, 0.25), line=dict(color=COR_TERM, width=2)))
+        else:
+            fig_term.add_trace(go.Scatter(
+                x=df_term_iper["Hora_Str"], y=df_term_iper["GERACAO"],
+                mode="lines", name="Geração Térmica Total",
+                fill="tozeroy", fillcolor=rgba(COR_TERM, 0.12),
+                line=dict(color=COR_TERM, width=3)))
+            fig_term.add_trace(go.Scatter(
+                x=df_term_iper["Hora_Str"], y=df_term_iper["GMIN"],
+                mode="lines", name="Inflexibilidade (GMin)",
+                line=dict(color="#94A3B8", width=1.5, dash="dot")))
+        _ym_t = df_term_iper["GERACAO"].max() * 1.05
+        _add_vline_fig(fig_term, hora_disp, _ym_t)
+        fig_term.update_layout(
+            **PLOTLY_LAYOUT, height=360,
+            xaxis_title="Hora", yaxis_title="Potência (MW)",
+            xaxis=dict(tickvals=ticks_src, tickmode="array"),
+            margin=dict(l=50, r=20, t=20, b=45),
+            legend=dict(orientation="h", y=-0.22, font=dict(size=10)))
+        st.plotly_chart(fig_term, use_container_width=True)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Col dir — RENOVÁVEL
+# ─────────────────────────────────────────────────────────────────────────────
+with col_renov_blk:
+    st.markdown(
+        f"<div style='font-size:15px;font-weight:700;color:{COR_RENOV};"
+        f"margin-bottom:10px;'>Geração Renovável</div>",
+        unsafe_allow_html=True)
+
+
+    fig_renov = go.Figure()
+    fig_renov.add_trace(go.Scatter(
+        x=df["Hora_Str"], y=df["G_RENOV"],
+        mode="lines", name="Geração Renovável",
+        fill="tozeroy", fillcolor=rgba(COR_RENOV, 0.18),
+        line=dict(color=COR_RENOV, width=3)))
+    # linha de média
+    fig_renov.add_hline(y=renov_media, line_dash="dot",
+        line_color="#16A34A", annotation_text=f"Média {renov_media:,.0f} MW",
+        annotation_position="bottom right",
+        annotation_font=dict(size=10, color="#16A34A"))
+    _ym_r = df["G_RENOV"].max() * 1.05
+    _add_vline_fig(fig_renov, hora_disp, _ym_r)
+    fig_renov.update_layout(
+        **PLOTLY_LAYOUT, height=360,
+        xaxis_title="Hora", yaxis_title="Potência (MW)",
+        xaxis=dict(tickvals=ticks_src, tickmode="array"),
+        margin=dict(l=50, r=20, t=20, b=45),
+        legend=dict(orientation="h", y=-0.22, font=dict(size=10)))
+    st.plotly_chart(fig_renov, use_container_width=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ROW 2  →  Col esq: Hidro (gráfico largo)   |   Col dir: Tabela estatísticas
+# ══════════════════════════════════════════════════════════════════════════════
+st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+col_hidro_blk, col_stats_blk = st.columns([1, 1])
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Col esq — HIDRO
+# ─────────────────────────────────────────────────────────────────────────────
+with col_hidro_blk:
+    st.markdown(
+        f"<div style='font-size:15px;font-weight:700;color:{COR_HIDRO};"
+        f"margin-bottom:10px;'>Geração Hidráulica</div>",
+        unsafe_allow_html=True)
+
+
+    fig_hidro = go.Figure()
+    fig_hidro.add_trace(go.Scatter(
+        x=df["Hora_Str"], y=df["G_HIDRO"],
+        mode="lines", name="Geração Hidráulica",
+        fill="tozeroy", fillcolor=rgba(COR_HIDRO, 0.18),
+        line=dict(color=COR_HIDRO, width=3)))
+    fig_hidro.add_hline(y=hidro_media, line_dash="dot",
+        line_color="#1D4ED8", annotation_text=f"Média {hidro_media:,.0f} MW",
+        annotation_position="bottom right",
+        annotation_font=dict(size=10, color="#1D4ED8"))
+    _ym_h = df["G_HIDRO"].max() * 1.05
+    _add_vline_fig(fig_hidro, hora_disp, _ym_h)
+    fig_hidro.update_layout(
+        **PLOTLY_LAYOUT, height=360,
+        xaxis_title="Hora", yaxis_title="Potência (MW)",
+        xaxis=dict(tickvals=ticks_src, tickmode="array"),
+        margin=dict(l=50, r=20, t=20, b=45),
+        legend=dict(orientation="h", y=-0.22, font=dict(size=10)))
+    st.plotly_chart(fig_hidro, use_container_width=True)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Col dir — TABELA DE ESTATÍSTICAS POR FONTE
+# ─────────────────────────────────────────────────────────────────────────────
+with col_stats_blk:
+    st.markdown(
+        f"<div style='font-size:15px;font-weight:700;color:{COR_TEXT};"
+        f"margin-bottom:10px;'>Estatísticas por Fonte</div>",
+        unsafe_allow_html=True)
+
+    # monta tabela — inclui térmica só se disponível
+    stats_rows = [
+        {
+            "Fonte":    "Hidráulica",
+            "Máximo":   f"{hidro_max:,.0f} MW",
+            "Horário ↑": t_hidro_max,
+            "Mínimo":   f"{hidro_min:,.0f} MW",
+            "Horário ↓": t_hidro_min,
+            "Média":    f"{hidro_media:,.0f} MW",
+            "_cor":     COR_HIDRO,
+        },
+        {
+            "Fonte":    "Renovável",
+            "Máximo":   f"{renov_max:,.0f} MW",
+            "Horário ↑": t_renov_max,
+            "Mínimo":   f"{renov_min:,.0f} MW",
+            "Horário ↓": t_renov_min,
+            "Média":    f"{renov_media:,.0f} MW",
+            "_cor":     COR_RENOV,
+        },
+        {
+            "Fonte":    "Térmica",
+            "Máximo":   f"{term_max:,.0f} MW",
+            "Horário ↑": t_term_max,
+            "Mínimo":   f"{term_min:,.0f} MW",
+            "Horário ↓": t_term_min,
+            "Média":    f"{term_media:,.0f} MW",
+            "_cor":     COR_TERM,
+        },
+        {
+            "Fonte":    "Total",
+            "Máximo":   f"{df['GER_TOTAL'].max():,.0f} MW",
+            "Horário ↑": df.loc[df['GER_TOTAL'].idxmax(), 'Hora_Str'],
+            "Mínimo":   f"{df['GER_TOTAL'].min():,.0f} MW",
+            "Horário ↓": df.loc[df['GER_TOTAL'].idxmin(), 'Hora_Str'],
+            "Média":    f"{df['GER_TOTAL'].mean():,.0f} MW",
+            "_cor":     COR_TEXT,
+        },
+    ]
+
+    # renderizar como cards HTML
+    for row in stats_rows:
+        cor = row["_cor"]
+        st.markdown(
+            f"<div style='background:white;border:1px solid {COR_BORDER};"
+            f"border-left:4px solid {cor};border-radius:10px;"
+            f"padding:10px 14px;margin-bottom:8px;'>"
+            f"<div style='font-size:12px;font-weight:700;color:{cor};"
+            f"margin-bottom:1px;'>{row['Fonte']}</div>"
+            f"<div style='display:flex;gap:160px;flex-wrap:wrap;'>"
+            f"<div><span style='font-size:9.5px;font-weight:600;color:{COR_MUTED};"
+            f"text-transform:uppercase;letter-spacing:.06em;'>Máximo</span><br>"
+            f"<span style='font-size:13px;font-weight:700;color:{COR_TEXT};'>{row['Máximo']}</span>"
+            f"<span style='font-size:10px;color:{COR_MUTED};margin-left:4px;'>⏱ {row['Horário ↑']}</span></div>"
+            f"<div><span style='font-size:9.5px;font-weight:600;color:{COR_MUTED};"
+            f"text-transform:uppercase;letter-spacing:.06em;'>Mínimo</span><br>"
+            f"<span style='font-size:13px;font-weight:700;color:{COR_TEXT};'>{row['Mínimo']}</span>"
+            f"<span style='font-size:10px;color:{COR_MUTED};margin-left:4px;'>⏱ {row['Horário ↓']}</span></div>"
+            f"<div><span style='font-size:9.5px;font-weight:600;color:{COR_MUTED};"
+            f"text-transform:uppercase;letter-spacing:.06em;'>Média</span><br>"
+            f"<span style='font-size:13px;font-weight:700;color:{COR_TEXT};'>{row['Média']}</span></div>"
+            f"</div></div>",
+            unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 11 CURVA DE PATO (RAMPA REAL: VALLLE → PICO VESPERTINO)
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 st.markdown(
     f"<h1 style='font-size:24px;font-weight:800;color:{COR_TEXT};"
@@ -577,31 +1091,64 @@ hora_ini_hidro = hora_fim_hidro = ""
 
 maior_rampa_mw = 0.0
 maior_rampa_hidro_mw = 0.0
+
 taxa_rampa_mw_min = 0.0
 
-df_vale = df[(df["IPER"] >= 21) & (df["IPER"] <= 32)]
+# ─────────────────────────────────────────────────────────────
+# 1. Encontrar valle solar (mínimo entre 10h y 16h)
+# ─────────────────────────────────────────────────────────────
+
+df_vale = df[(df["IPER"] >= 21) & (df["IPER"] <= 32)]  # ~10:00 a 16:00
 
 if not df_vale.empty:
+
     idx_min = df_vale["DEMANDA_LIQUIDA"].idxmin()
     val_min = df.loc[idx_min, "DEMANDA_LIQUIDA"]
+
     hora_ini_rampa = df.loc[idx_min, "Hora_Str"]
 
+    # ─────────────────────────────────────────────────────────
+    # 2. Buscar pico posterior (desde el valle hasta fin del día)
+    # ─────────────────────────────────────────────────────────
+
     df_pos = df.loc[idx_min:]
+
     idx_max = df_pos["DEMANDA_LIQUIDA"].idxmax()
     val_max = df.loc[idx_max, "DEMANDA_LIQUIDA"]
+
     hora_fim_rampa = df.loc[idx_max, "Hora_Str"]
 
     maior_rampa_mw = val_max - val_min
-    maior_rampa_hidro_mw = df.loc[idx_max, "G_HIDRO"] - df.loc[idx_min, "G_HIDRO"]
+
+    # ─────────────────────────────────────────────────────────
+    # 3. Rampa hidráulica en el mismo intervalo
+    # ─────────────────────────────────────────────────────────
+
+    maior_rampa_hidro_mw = (
+        df.loc[idx_max, "G_HIDRO"] - df.loc[idx_min, "G_HIDRO"]
+    )
 
     hora_ini_hidro = hora_ini_rampa
     hora_fim_hidro = hora_fim_rampa
 
+    # ─────────────────────────────────────────────────────────
+    # 4. Gradiente real (en minutos)
+    # ─────────────────────────────────────────────────────────
+
     dt_min = max((idx_max - idx_min) * 30, 1)
     taxa_rampa_mw_min = maior_rampa_mw / dt_min
 
+
+# ─────────────────────────────────────────────────────────────
+# Conversión
+# ─────────────────────────────────────────────────────────────
+
 maior_rampa_gw   = maior_rampa_mw / 1000.0
 maior_rampa_h_gw = maior_rampa_hidro_mw / 1000.0
+
+# ─────────────────────────────────────────────────────────────
+# Queda renovable (igual que antes)
+# ─────────────────────────────────────────────────────────────
 
 max_renov = df["G_RENOV"].max()
 pos_pico = df.index.get_loc(df["G_RENOV"].idxmax())
@@ -649,6 +1196,7 @@ if hora_ini_hidro and hora_fim_hidro:
 
 fig_pato.update_layout(**PLOTLY_LAYOUT, height=600, xaxis_title="Horário do Dia",
     yaxis_title="Potência (MW)", xaxis=dict(tickvals=TICKS_2H, tickmode="array"))
+# Linha IPER
 _ym_pato = df["DEMANDA"].max() * 1.08
 fig_pato.add_trace(go.Scatter(x=[hora_disp,hora_disp], y=[0, _ym_pato],
     mode="lines", showlegend=False,
@@ -658,6 +1206,12 @@ fig_pato.add_annotation(x=hora_disp, y=_ym_pato, text=f"<b>{hora_disp}</b>",
     bgcolor="white", bordercolor="#94A3B8", borderwidth=1)
 st.plotly_chart(fig_pato, use_container_width=True)
 
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 12. CURVA DE DURAÇÃO
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 st.markdown(
     f"<h1 style='font-size:24px;font-weight:800;color:{COR_TEXT};"
@@ -688,6 +1242,8 @@ fig_dur.add_trace(go.Scatter(x=x_dur, y=total_s, mode="lines", line_shape="hv",
 fig_dur.update_layout(**PLOTLY_LAYOUT, height=600,
     xaxis_title="% do dia (ordenado por geração total decrescente)", yaxis_title="MW",
     margin=dict(l=50,r=30,t=20,b=55))
+# Linha IPER — posição percentual do IPER no eixo de duração
+# O IPER selecionado ocupa a posição onde seu valor de GER_TOTAL cai na ordenação
 _iper_rank    = np.sum(df["GER_TOTAL"].values >= df.loc[df["IPER"]==iper_sel,"GER_TOTAL"].values[0]
                        if not df[df["IPER"]==iper_sel].empty else df["GER_TOTAL"].values >= 0)
 _x_dur_iper   = float(_iper_rank) / len(df) * 100
@@ -701,6 +1257,10 @@ fig_dur.add_annotation(x=_x_dur_iper, y=_ym_dur,
     bgcolor="white", bordercolor="#94A3B8", borderwidth=1)
 st.plotly_chart(fig_dur, use_container_width=True)
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 13. RODAPÉ
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 st.markdown(
     f"<div style='font-size:11px;color:{COR_MUTED};text-align:center;padding-bottom:16px;'>"
