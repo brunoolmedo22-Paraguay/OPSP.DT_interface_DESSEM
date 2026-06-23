@@ -58,7 +58,7 @@ COR_RENOV  = "#22C55E"
 COR_TERM   = "#EF4444"
 COR_NUC    = "#6D28D9"
 COR_ACCENT = "#0EA5E9"
-COR_BG     = "#F5FBFF"
+COR_BG     = "#FFFFFF"
 COR_TEXT   = "#0F172A"
 COR_MUTED  = "#64748B"
 COR_BORDER = "#E2E8F0"
@@ -71,8 +71,54 @@ st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-html, body, [class*="css"] {{
-    font-family: 'Inter', -apple-system, sans-serif;
+/* ── Forçar tema claro em TUDO — bloqueia modo noite ─────────────────────── */
+html, body, [class*="css"], [data-testid="stAppViewContainer"],
+[data-testid="stApp"], .stApp, .main, section.main {{
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    background-color: #FFFFFF !important;
+    color: {COR_TEXT} !important;
+    color-scheme: light !important;
+}}
+
+/* Forçar todos os textos escuros independente do tema */
+p, span, div, label, h1, h2, h3, h4, h5, h6 {{
+    color: {COR_TEXT} !important;
+}}
+
+/* Botões e inputs — sempre fundo branco */
+button, input, select, textarea,
+[data-testid="stSelectbox"] > div,
+[data-testid="stSlider"] > div {{
+    background-color: #FFFFFF !important;
+    color: {COR_TEXT} !important;
+    border-color: {COR_BORDER} !important;
+}}
+
+/* Dropdown do selectbox — sempre branco */
+[data-baseweb="select"] > div,
+[data-baseweb="popover"] {{
+    background-color: #FFFFFF !important;
+    color: {COR_TEXT} !important;
+}}
+
+/* Opções do dropdown */
+[role="option"], [role="listbox"] {{
+    background-color: #FFFFFF !important;
+    color: {COR_TEXT} !important;
+}}
+[role="option"]:hover {{
+    background-color: {COR_BORDER} !important;
+}}
+
+/* Header do Streamlit */
+[data-testid="stHeader"] {{
+    background-color: #FFFFFF !important;
+}}
+
+/* Toolbar e menu */
+[data-testid="stToolbar"],
+[data-testid="stDecoration"] {{
+    background-color: #FFFFFF !important;
 }}
 
 .stApp {{
@@ -90,10 +136,20 @@ html, body, [class*="css"] {{
     padding-right: 2rem !important;
 }}
 
-/* ── Sidebar ──────────────────────────────────────────────────────────────── */
-[data-testid="stSidebar"] {{
+/* ── Sidebar — sempre branco ──────────────────────────────────────────────── */
+[data-testid="stSidebar"],
+[data-testid="stSidebar"] > div {{
     background: white !important;
+    background-color: white !important;
     border-right: 1.5px solid {COR_BORDER} !important;
+}}
+
+/* Textos dentro do sidebar */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] div,
+[data-testid="stSidebar"] label {{
+    color: {COR_TEXT} !important;
 }}
 
 [data-testid="stSidebar"] .stSlider > div > div > div {{
