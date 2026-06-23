@@ -13,63 +13,37 @@ import zipfile
 import gdown
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 🆕 NOVO: Baixar DATABASE do Google Drive
+# SETUP: Baixar DATABASE do Google Drive (só na primeira vez)
 # ═══════════════════════════════════════════════════════════════════════════════
-
 @st.cache_resource
 def setup_database():
-    """
-    Baixa DATABASE.zip do Google Drive e descompacta automaticamente.
-    """
-    
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    SCRIPT_DIR    = os.path.dirname(os.path.abspath(__file__))
     DATABASE_PATH = os.path.join(SCRIPT_DIR, "DATABASE")
-    
-    # Se DATABASE já existe, não precisa baixar novamente
     if os.path.exists(DATABASE_PATH):
         return DATABASE_PATH
-    
     try:
-        # ⭐ SEU ID (já preenchido!)
         GOOGLE_DRIVE_FILE_ID = "1t32md3cZfZfJQNuQZtoebWy7ze0v20j8"
-        
         zip_path = os.path.join(SCRIPT_DIR, "DATABASE.zip")
-        
-        # Baixar do Google Drive
-        st.info("Primeira vez! Baixando DATABASE.zip (pode levar alguns minutos)...")
+        st.info("⏳ Primeira vez! Baixando DATABASE do Google Drive...")
         gdown.download(
-            f'https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}',
-            zip_path,
-            quiet=False
+            f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}",
+            zip_path, quiet=False
         )
-        
-        st.success("Download completo!")
-        
-        # Descompactar
-        st.info("Descompactando arquivos...")
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(SCRIPT_DIR)
-        
-        st.success("Arquivos prontos!")
-        
-        # Deletar ZIP depois (economiza espaço)
+        st.info("📦 Descompactando arquivos...")
+        with zipfile.ZipFile(zip_path, "r") as z:
+            z.extractall(SCRIPT_DIR)
         try:
             os.remove(zip_path)
         except:
             pass
-        
+        st.success("✅ Dados prontos!")
         return DATABASE_PATH
-    
     except Exception as e:
-        st.error(f"Erro ao baixar: {e}")
+        st.error(f"❌ Erro ao baixar dados: {e}")
         st.stop()
 
-# Executar no início
 DATABASE_PATH = setup_database()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Resto do código continua IGUAL (não mude nada daqui para baixo)
-# ═══════════════════════════════════════════════════════════════════════════════
 # ═══════════════════════════════════════════════════════════════════════════════
 # 0. CONFIGURAÇÃO DA PÁGINA
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -222,16 +196,7 @@ MAPA_DATAS = {
     "06/03/2026": "DS_ONS_032026_RV0D06",
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. CAMINHOS RELATIVOS À PASTA BASE
-# ═══════════════════════════════════════════════════════════════════════════════
-# Obter o diretório onde este script está localizado (pasta base do projeto)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-# Pasta DATABASE dentro da pasta base
-DATABASE_PATH = os.path.join(SCRIPT_DIR, "DATABASE")
-# Exibição do caminho (para debug no sidebar)
-DISPLAY_PATH = "DATABASE"
-
+BASE_PATH   = DATABASE_PATH
 DATAS_LIST  = list(MAPA_DATAS.keys())
 SUBSISTEMAS = ["SIN", "SE", "S", "NE", "N"]
 
@@ -396,7 +361,7 @@ with st.sidebar:
     st.markdown(
         f"<div style='font-size:10px;color:{COR_MUTED};'>"
         f"IPER 1–48 · 00:00 → 23:30<br>"
-        f"Base: <code style='font-size:9px;'>{BASE_PATH}</code></div>",
+        f"Base: <code style='font-size:9px;'>./DATABASE</code></div>",
         unsafe_allow_html=True)
 
 
